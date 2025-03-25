@@ -15,6 +15,10 @@ const teacherSchema= new  mongoose.Schema({
     type: String,
     required: true,
   },
+  available: {
+    type: Boolean,
+    required: true,
+  },
   students:[
     {
   type: mongoose.Types.ObjectId,

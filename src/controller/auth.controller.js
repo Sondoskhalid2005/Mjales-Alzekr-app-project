@@ -7,9 +7,8 @@ const expireDate= 3*24*60*60;
 // token method
 
 const creatToken=(userId)=>{
-    return jwt.sign({ userId }, "secret", {expiresIn: expireDate,})
-                           }
-
+    return jwt.sign({ userId }, "secret", {expiresIn: expireDate,})}
+//signin
 const signIn =async(req,res)=>{
     try{
         const { email , password} = req.body;
@@ -17,14 +16,16 @@ const signIn =async(req,res)=>{
             teachers.findOne({email}) ,
             students.findOne({email}) 
         ]);
-        const user = teacher || student;
+        
+        const user = teacher || student ;
         if(!user){
             return res.status(404).send({
                success: false , msg : "user not found !" })
                  }
 
-/******/ const authuser=bcrypt.compare(password, user.password)
-          if(!authuser){
+/******/ 
+        const authUser = await bcrypt.compare(password,user.password);
+          if(!authUser){
             return res.status(400).send( 
                 {
                 status:400 ,
@@ -49,8 +50,62 @@ const signIn =async(req,res)=>{
          }) 
           }
 } 
-const signup=async(req,res)=>{
+//signup
+const signUp=async(req,res)=>{
+    try{
+        console.log("Signup route hit!");
+        const {type ,username , email , password} = req.body;
+        const bcryptt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, bcryptt);
 
+        if (type==="teacher"){
+        const newTeacher= new teachers({username , email , password : hashedPassword , available :false});
+        await newTeacher.save();
+
+        return res.status(201).send( 
+            {
+            success : true ,
+            message: "teacher registered successfully!" ,
+            userData: newTeacher
+            })     
+         }
+         else if(type==="student"){
+            const newStudent= new students({username , email , password : hashedPassword });
+            await newStudent.save(); 
+              
+            return res.status(201).send( 
+                {
+                success : true ,
+                message: "student registered successfully!" ,
+                userData: newStudent
+                }) 
+        }
+    }
+    catch(error){
+        res.status(500).send( 
+            {
+            status:500 ,
+            message: "server error" + error.message
+            })
+    }
 }
- module.exports={signIn,signup} ;                   
+//signout
+const signOut = async (req,res)=>{
+    try{
+        res.cookie("token", "", { maxAge: 1 });
+        return res.status(200).send( 
+            {
+            success:true ,
+            message: "user signed out seccessfully"
+            });
+    }
+    catch(error){
+        res.status(500).send( 
+            {
+            status:500 ,
+            message: "server error"
+            })
+    }
+}
+ module.exports={signIn,signUp,signOut} ;                   
                            

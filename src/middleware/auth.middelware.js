@@ -38,7 +38,7 @@ const checker= async(req,res,next)=>{
        }catch(error){
         res.status(500).send({
             status: 500 ,
-            msg:"server  error" + error.message
+            msg:"server  error" + error.message ,
           })
        }
        

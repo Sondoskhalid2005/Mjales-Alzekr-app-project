@@ -17,8 +17,7 @@ const studentSchema= new  mongoose.Schema({
   },
   teacherId: {
     type: mongoose.Types.ObjectId,
-    ref: "teachers",
-    required: true,
+    ref: "teachers"
   }
 })
 studentSchema.pre("save",async function(next){
