@@ -15,6 +15,10 @@ const studentSchema= new  mongoose.Schema({
     type: String,
     required: true,
   },
+  markes: {
+    type: Number,
+    
+  },
   teacherId: {
     type: mongoose.Types.ObjectId,
     ref: "teachers"
