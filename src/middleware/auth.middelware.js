@@ -13,13 +13,13 @@ const checker= async(req,res,next)=>{
             .json({ success: "failed", msg: "Unauthorized , no token provided"});}
 
             let decodedToken = jwt.verify(token, "secret");
-            console.log("Decoded Token:", decoded);
-            if (!decoded.userId){
+            console.log("Decoded Token:", decodedToken);
+            if (!decodedToken.userId){
                 return res
                   .status(401)
                   .json({ success: false, msg: "Unauthorized ,invalid token"});}
                      
-          req.userId = decoded.userId;
+          req.userId = decodedToken.userId;
           req.userId = new mongoose.Types.ObjectId(req.userId);
            const [teacher , student] = await Promise.all([ 
                       teachers.findById(req.userId) ,
@@ -45,15 +45,25 @@ const checker= async(req,res,next)=>{
 }
 const auth=async(req,res)=>{
     try{
-    const studentId=req.param.studentId;
-    const teacherId=req.userId;
-    const teacher= await teachers.findById(teacherId)
-    
-    const student= await students.findById(studentId)
+    let studentid=req.params.studentid;
+    const studentid1=new mongoose.Types.ObjectId(studentid);
+    const teacherid=req.userId;
+    const teacher= await teachers.findById(teacherid)
+    console.log(teacher.students);
+
+    const student= await students.findById(studentid1)
           if(!student){ // in middleware
               return res.status(400).send({msg:"student is not found" })
           }
-          const teachers_student = await teacher.students.findById(studentId)
+           let teachers_student=[];
+           while(true){
+
+           const teachers_studentt = await teacher.students.find(student => student._id.toString() === studentid.toString());
+           teachers_student.push(teachers_studentt)
+           break;
+        }
+           console.log(teachers_student);
+          
           if(!teachers_student){ // in middleware
               return res.status(400).send({msg:"student is not in your group , you cant set marks for him" })
           }  

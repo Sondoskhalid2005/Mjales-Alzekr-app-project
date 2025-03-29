@@ -15,14 +15,14 @@ const studentSchema= new  mongoose.Schema({
     type: String,
     required: true,
   },
-  markes: {
-    type: Number,
-    
-  },
   teacherId: {
     type: mongoose.Types.ObjectId,
     ref: "teachers"
-  }
+  },
+  mark: {
+    type: Number,
+    
+  },
 })
 studentSchema.pre("save",async function(next){
     this.password = await bcrypt.hash(this.password,10)

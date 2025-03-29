@@ -24,7 +24,7 @@ const signIn =async(req,res)=>{
                  }
 
 /******/ 
-        const authUser = await bcrypt.compare(password,user.password);
+        const authUser =  bcrypt.compare(password,user.password);
           if(!authUser){
             return res.status(400).send( 
                 {

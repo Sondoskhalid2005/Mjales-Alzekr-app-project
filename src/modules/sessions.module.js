@@ -17,9 +17,5 @@ const sessionSchema= new  mongoose.Schema({
   },
 ]
 })
-////////////////////////
-sessionSchema.pre("save",async function(next){
-    this.password = await bcrypt.hash(this.password,10)
-    next()
-  })
+
   module.exports = mongoose.model("sessions", sessionSchema);
