@@ -6,7 +6,7 @@ const middleware = require("../middleware/auth.middelware");
 router.post("/set-student-mark/:studentid",/*/middlewarehere /*/ controller.set_student_mark)
 router.post("/start-session"  ,controller.start_session)
 router.get("/end-session"  ,controller.end_session)
-
 router.get("/view-my-students"  ,controller.view_students)
+router.get("/view-session-students"  ,controller.session_students)
 
 module.exports = router ;

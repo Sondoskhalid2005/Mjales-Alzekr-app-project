@@ -70,14 +70,25 @@ const signUp=async(req,res)=>{
             })     
          }
          else if(type==="student"){
-            const newStudent= new students({username , email , password : hashedPassword });
+         
+            let teacher = await teachers.find(); //return all teacher 
+            console.log(teacher);
+            let filteredTeachers =teacher.filter(teach=>{return teach.students.length!==5})
+            console.log(filteredTeachers);
+            const teacherFound=filteredTeachers[0];
+            console.log(teacherFound);
+            const newStudent= new students({username , email , password : hashedPassword , teacherId:teacherFound._id });
+            await teachers.findByIdAndUpdate(teacherFound._id, { $push: { students: newStudent._id } });
+            teacherFound.students.push(newStudent._id)
             await newStudent.save(); 
               
             return res.status(201).send( 
                 {
                 success : true ,
                 message: "student registered successfully!" ,
-                userData: newStudent
+                "student name": newStudent.username,
+                "student id": newStudent._id,
+                "students teacher": teacherFound.username
                 }) 
         }
     }
