@@ -7,7 +7,7 @@ const mongoose= require("mongoose");
 const view_mark=async(req,res)=>{
     try{
         const studentid=req.userId;
-        const student=await students.findById(studentid); // in  middleware check user exictance
+        const student=await students.findById(studentid);
         if(student.mark){
             res.status(200).send({success:true,"mark":student.mark})
         }
@@ -63,22 +63,25 @@ const available_session=async(req,res)=>{
 }
 // join_session
 const join_session=async(req,res)=>{
-    try{ //dont forget to check if student is already in a session or not to prevent doublicates 
+    try{ 
         const studentid=req.userId;
         const student=await students.findById(studentid);
         const teacher=await teachers.findById(student.teacherId) 
         const session=await sessions.findOne({teacherId:teacher._id})
-        
-            if(teacher.available && session){
-            res.status(200).send({success:true, "your joining a session , with teacher" :teacher.username ,
+       
+            if( !teacher.available && !session){
+               return res.status(404).send({success:false, message: "no active session to join with your teacher !"})
+        }
+        if(teacher.available && session){
+            session.studentsId.push(studentid);
+            await session.save() 
+            return res.status(200).send({success:true, "your joining a session , with your teacher" :teacher.username ,
                 "sesssion name ": session.sessionName,})
-                session.studentsId.push(studentid);
-            await session.save()}
-            else{
-            res.status(200).send({success:true, "teacher name": teacher.username,
-                            "available" : "no available session to joined !"})
                              
         }
+        if(session.studentsId.includes(student._id)){
+            return res.status(404).send({success:false, message: " your already in a session with your teacher now !"})
+       }
        }catch(error){
         res.status(500).send( 
             {
@@ -92,29 +95,20 @@ const leave_session=async(req,res)=>{
     try{
         const studentid=req.userId;
         const student=await students.findById(studentid);
-        if (!student) {
-            console.log(student,studentid , req.userId);
-            
-            return res.status(404).send({ success: false, msg: "Student not found!" });
-        }
         const teacher=await teachers.findById(student.teacherId) 
         const session=await sessions.findOne({teacherId:teacher._id})
         
-            if(!teacher.available && !session ){
-                res.status(404).send({success:true, "msg":"No active session to leave !"})
-             }
+         if(!session || !session.studentsId.includes(student._id)){
+            res.status(404).send({success:false, "msg" :"no session joined to leave !"}) 
+        }
             else{
-                if(session.studentsId.includes(student._id)){
-            session.studentsId.pull(student._id); // remove the student in session collection
-            await session.save()
-            res.status(200).send({success:true, "session name": session.sessionName , "msg" :"left the session successfully !"})
-            }
-            else{
-                res.status(404).send({success:true, "session name": session.sessionName , "msg" :"no session joined to leave !"})
+                 session.studentsId.pull(student._id); // remove the student in session collection
+                await session.save()
+                res.status(200).send({success:true, "session name": session.sessionName , "msg" :"left the session successfully !"})
+               
             }
                
-        }
-       }catch(error){
+        }catch(error){
         res.status(500).send( 
             {
             status:500 ,

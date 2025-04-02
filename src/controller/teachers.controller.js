@@ -7,15 +7,19 @@ const mongoose= require("mongoose");
 const set_student_mark =async(req,res)=>{
     try{
         let {studentid} = req.params;
-        const {markk}=req.body;
+        const {mark}=req.body;
         studentid=new mongoose.Types.ObjectId(studentid);
         const teacherid=req.userId;
         const student= await students.findById(studentid)
-        await students.findByIdAndUpdate(studentid, {mark:markk , teacherId: teacherid });
+        await students.findByIdAndUpdate(studentid, {mark:mark });
+        const updatedStudent= await students.findById(studentid)
         return res.status(201).send({
             "success": true,
-            "student name": student.username ,
-            "message": "student mark changed seccessfuly"
+            "message": "student mark changed seccessfuly",
+            "student name": updatedStudent.username ,
+            "student email": updatedStudent.email ,
+            "student new mark": updatedStudent.mark 
+            
         });
      
        }
@@ -33,8 +37,9 @@ const start_session=async(req,res)=>{
     const teacherid=req.userId;
     const {sessionname} = req.body; //...will see if beter to take seperate attributes in body
     const teacher= await teachers.findById(teacherid);
-    console.log(sessionname ,teacher , teacher.available);
-    
+    if(!sessionname){ 
+        return res.status(404).send({success:false ,msg:"put session name in request body" })
+    }
     if(teacher.available){ // means teacher in a session and can not be start new session
         return res.status(201).send({"success": false , "msg": "cant make a new session, you are already in a session ! "});
     }else{
@@ -63,7 +68,12 @@ const view_students=async(req,res)=>{
     const teacherid=req.userId;
     const studentlist = await students.find({teacherId:teacherid });
     let mappedStudent=studentlist.map((stud)=>({name:stud.username,id:stud._id, mark:stud.mark }))
-    
+    console.log(studentlist, mappedStudent , teacherid);
+    if(studentlist.length==0){
+        return res.status(200).send({
+            success: true,
+            message: " you have no students yet "})
+    }
     return res.status(200).send({
         success: true,
         "students": mappedStudent

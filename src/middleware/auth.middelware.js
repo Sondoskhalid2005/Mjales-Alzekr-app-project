@@ -6,73 +6,91 @@ const mongoose = require("mongoose");
 const checker= async(req,res,next)=>{
     try{
         const token = req.cookies.token
-
         if (!token){
             return res
             .status(401)
-            .json({ success: "failed", msg: "Unauthorized , no token provided"});}
-
+            .json({ success: "failed", msg: "Unauthorized , no token provided"});
+                   }
             let decodedToken = jwt.verify(token, "secret");
-            console.log("Decoded Token:", decodedToken);
             if (!decodedToken.userId){
                 return res
                   .status(401)
                   .json({ success: false, msg: "Unauthorized ,invalid token"});}
-                     
           req.userId = decodedToken.userId;
           req.userId = new mongoose.Types.ObjectId(req.userId);
-           const [teacher , student] = await Promise.all([ 
-                      teachers.findById(req.userId) ,
-                      students.findById(req.userId)
-                  ]);
-                  const user = teacher || student ;
-                console.log(req.userId)
-    if (!user) {
-        return res
-        .status(404)
-        .json({ status: 404, message: "User not found" });
-              }
-
-         console.log("Extracted userId:", typeof(req.userId));
+          
           next();
        }catch(error){
         res.status(500).send({
             status: 500 ,
-            msg:"server  error" + error.message ,
+            msg:"server  error " + error.message ,
           })
        }
        
 }
-const auth=async(req,res)=>{
+// teachers auth
+const teacherAuth=async(req,res,next)=>{
     try{
-    let studentid=req.params.studentid;
-    const studentid1=new mongoose.Types.ObjectId(studentid);
-    const teacherid=req.userId;
-    const teacher= await teachers.findById(teacherid)
-    console.log(teacher.students);
-
-    const student= await students.findById(studentid1)
-          if(!student){ // in middleware
-              return res.status(400).send({msg:"student is not found" })
-          }
-           let teachers_student=[];
-           while(true){
-
-           const teachers_studentt = await teacher.students.find(student => student._id.toString() === studentid.toString());
-           teachers_student.push(teachers_studentt)
-           break;
+        const id =req.userId
+        console.log(id);
+    const teacher=await teachers.findById(id);
+    if(!teacher) {
+        return res
+        .status(404)
+        .json({ status: 404, message: "Unouthorized access !" });
         }
-           console.log(teachers_student);
-          
-          if(!teachers_student){ // in middleware
-              return res.status(400).send({msg:"student is not in your group , you cant set marks for him" })
-          }  
+    next();
         }catch(error){
             res.status(500).send( 
                 {
                 status:500 ,
-                message: "server error" + error.message
+                message: "server error " + error.message
                 }) 
         }
 }
-module.exports={checker , auth};
+// changing students mark auth
+const studentListAuth=async(req,res,next)=>{
+    try{
+    let studentid=req.params.studentid;
+    const convertedStudentid=new mongoose.Types.ObjectId(studentid);
+    const teacherid=req.userId;
+    const teacher= await teachers.findById(teacherid)
+    const student= await students.findById(convertedStudentid)
+          if(!student){ 
+              return res.status(404).send({success:false ,msg:"student not found" })
+          }
+          if(!teacher.students.includes(student._id)){
+            return res.status(400).send({success:false ,msg:"student is not in your group , mark cannot be changed ! " })
+          }
+      next();
+        }catch(error){
+            res.status(500).send( 
+                {
+                status:500 ,
+                message: "server error " + error.message
+                }) 
+        }
+}
+// students authentication
+const studentAuth=async(req,res,next)=>{
+    try{
+        const id = req.userId;
+     const student=await students.findById(id);
+     console.log(student,id);
+     
+    if(!student) {
+        return res
+        .status(404)
+        .json({ status: 404, message: "Unouthorized access !" });
+        }
+    next();
+        }catch(error){
+            res.status(500).send( 
+                {
+                status:500 ,
+                message: "server error " + error.message
+                }) 
+        }
+}
+
+module.exports={checker , teacherAuth,studentListAuth, studentAuth};
