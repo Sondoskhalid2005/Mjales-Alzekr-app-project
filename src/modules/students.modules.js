@@ -19,9 +19,11 @@ const studentSchema= new  mongoose.Schema({
     type: mongoose.Types.ObjectId,
     ref: "teachers"
   },
+  available: {
+    type: Boolean,
+  },
   mark: {
-    type: Number,
-    
+    type: Number, 
   },
 })
 studentSchema.pre("save",async function(next){

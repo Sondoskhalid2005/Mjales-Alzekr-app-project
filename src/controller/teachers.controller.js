@@ -88,9 +88,7 @@ const view_students = async (req, res) => {
         let mappedStudent = studentlist.map((stud) => ({
             name: stud.username,
             id: stud._id,
-            mark: stud.mark
-        }))
-        console.log(studentlist, mappedStudent, teacherid);
+            mark: stud.mark }))
         if (studentlist.length == 0) {
             return res.status(200).send({
                 success: true,
@@ -113,26 +111,30 @@ const end_session = async (req, res) => {
     try {
         const teacherid = req.userId;
         const teacher = await teachers.findById(teacherid);
-        if (!teacher.available) {
+        const session = await sessions.findOne({
+            teacherId: teacher._id
+        }); 
+        if (!teacher.available && !session) {
             return res.status(404).send({
                 "success": false,
-                "msg": "your not in a session to end ! "
+                message: "your didnt start a session to end ! "
             });
         } else {
             await teachers.findByIdAndUpdate(teacherid, {
                 available: false
             });
-            console.log("hi");
-            const session = await sessions.find({
-                teacherId: teacherid
-            });
-            console.log(session);
+            console.log("here dont forget to test then delete"); 
+            await students.updateMany(
+                { _id: { $in: session.studentsId.map(id => id) } }, // change all students in session availabiliy into false
+                { available: false }
+              );
+            console.log("working successfully");
             await sessions.deleteMany({
                 teacherId: teacherid
             });
             return res.status(201).send({
                 "success": true,
-                "message": "session ended succssefully"
+                 message: "session ended succssefully"
             });
         }
     } catch (error) {
@@ -152,7 +154,7 @@ const session_students = async (req, res) => {
         });
         if (session) {
             const sessionStudentlist = session.studentsId;
-            let allStudents = await students.find(); //return all teacher
+            let allStudents = await students.find(); //return all students
             let filterdStudent = allStudents.filter(stud => sessionStudentlist.includes(stud._id)) //
             const mapedStudents = filterdStudent.map(stud => ({
                 id: stud._id,
@@ -161,7 +163,7 @@ const session_students = async (req, res) => {
             if (filterdStudent.length == 0) {
                 return res.status(200).send({
                     "success": true,
-                    "students joining your session": "no students joined yet"
+                    message: "no students joined yet"
                 });
             }
             return res.status(200).send({
@@ -171,10 +173,48 @@ const session_students = async (req, res) => {
         } else if (!session) {
             return res.status(404).send({
                 "success": false,
-                "students joining your session": "no session started yet to view its students!"
+                 message: "no session started yet to view its students!"
             })
         }
     } catch (error) {
+        res.status(500).send({
+            status: 500,
+            message: "server error " + error.message
+        })
+    }
+}
+// view_teacher_info 
+const view_teacher_info = async (req, res) => {
+    try {
+        const teacherid = req.userId;
+        const teacher = await teachers.findById(teacherid)
+        const studentlist = await students.find({
+            teacherId: teacherid
+        });
+        let mappedStudent = studentlist.map((stud) => ({
+            name: stud.username,
+            id: stud._id,
+            mark: stud.mark
+        }))
+        if(mappedStudent.length==0){
+        return res.status(200).send( 
+            {
+         success : true ,
+        "teacher name ": teacher.username,
+        "teacher email ": teacher.email,
+        "teacher id ": teacher._id,
+        "teacher students": "you have no students yet "})
+            }
+            else{
+                return res.status(200).send( 
+                    {
+                 success : true ,
+                "teacher name ": teacher.username,
+                "teacher email ": teacher.email,
+                "teacher id ": teacher._id,
+                "teacher students":mappedStudent}) 
+            }
+    }catch (error) {
         res.status(500).send({
             status: 500,
             message: "server error " + error.message
@@ -186,5 +226,6 @@ module.exports = {
     start_session,
     view_students,
     end_session,
-    session_students
+    session_students,
+    view_teacher_info
 }

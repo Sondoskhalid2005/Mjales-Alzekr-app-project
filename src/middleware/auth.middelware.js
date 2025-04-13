@@ -81,7 +81,6 @@ const studentAuth = async (req, res, next) => {
     try {
         const id = req.userId;
         const student = await students.findById(id);
-        console.log(student, id);
         if (!student) {
             return res.status(404).json({
                 status: 404,
@@ -96,9 +95,29 @@ const studentAuth = async (req, res, next) => {
         })
     }
 }
+// check if student in session cant use any other methode until he leave
+const check_availabile = async (req, res, next) => {
+    try {
+        const id = req.userId;
+        const student = await students.findById(id);
+        if (student && student.available) {
+            return res.status(404).json({
+                status: 404,
+                message: "your in a session now, you cant use any rout until you leave!"
+            });
+        }
+        next();
+    } catch (error) {
+        res.status(500).send({
+            status: 500,
+            message: "server error " + error.message
+        })
+    }
+}
 module.exports = {
     checker,
     teacherAuth,
     studentListAuth,
-    studentAuth
+    studentAuth,
+    check_availabile
 };

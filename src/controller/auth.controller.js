@@ -80,7 +80,7 @@ const signUp=async(req,res)=>{
                 success : false , message:"registration failed, no available teachers to add you in their group !" })
             }
             const teacherFound=filteredTeachers[0];
-            const newStudent= new students({username , email , password : hashedPassword , teacherId:teacherFound._id,mark:0 });
+            const newStudent= new students({username , email , password : hashedPassword , teacherId:teacherFound._id,available:false,mark:0 });
             await teachers.findByIdAndUpdate(teacherFound._id, { $push: { students: newStudent._id } });
             teacherFound.students.push(newStudent._id)
             await newStudent.save(); 
