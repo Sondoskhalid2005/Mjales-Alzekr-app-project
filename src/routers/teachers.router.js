@@ -8,5 +8,8 @@ router.post("/session/start-session"  ,middleware.teacherAuth,controller.start_s
 router.get("/session/end-session"  ,middleware.teacherAuth,controller.end_session)
 router.get("/view-students"  ,middleware.teacherAuth,controller.view_students)
 router.get("/session/students-session"  ,middleware.teacherAuth,controller.session_students)
-router.get("/view-info",middleware.check_availabile,middleware.teacherAuth, controller.view_teacher_info)
+router.get("/session/manage-requests/status?"  ,middleware.teacherAuth,controller.manage_requests)
+router.get("/view-requests",middleware.check_availabile,middleware.teacherAuth, controller.view_requests)
+router.get("/view-profile",middleware.check_availabile,middleware.teacherAuth, controller.view_teacher_profile)
+
 module.exports = router ;

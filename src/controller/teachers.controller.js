@@ -1,6 +1,7 @@
 const teachers = require("../modules/teachers.modules");
 const students = require("../modules/students.modules");
-const sessions = require("../modules/sessions.module")
+const sessions = require("../modules/sessions.module");
+const requests = require("../modules/sessionsRequests.module");
 const mongoose = require("mongoose");
 
 // set_student_mark
@@ -51,7 +52,7 @@ const start_session = async (req, res) => {
                 msg: "put session name in request body"
             })
         }
-        if (teacher.available) { // means teacher in a session and can not be start new session
+        if (teacher.available) { // means teacher in a session and can not start new session
             return res.status(201).send({
                 "success": false,
                 "msg": "you are already in a session,you cant start a new one ! "
@@ -66,7 +67,8 @@ const start_session = async (req, res) => {
             })
             await sessions.create({
                 sessionName: session_name,
-                teacherId: teacherid
+                teacherId: teacherid,
+                available:true
             });
             return res.status(201).send({
                 "success": true,
@@ -116,7 +118,7 @@ const end_session = async (req, res) => {
         const teacherid = req.userId;
         const teacher = await teachers.findById(teacherid);
         const session = await sessions.findOne({
-            teacherId: teacher._id
+            teacherId: teacher._id, available:true
         }); 
         if (!teacher.available && !session) {
             return res.status(404).send({
@@ -131,8 +133,8 @@ const end_session = async (req, res) => {
                 { _id: { $in: session.studentsId.map(id => id) } }, // change all students in session availabiliy into false
                 { available: false }
               );
-            await sessions.deleteMany({
-                teacherId: teacherid
+              await sessions.findByIdAndUpdate(session._id, {
+                available: false
             });
             return res.status(201).send({
                 "success": true,
@@ -152,7 +154,7 @@ const session_students = async (req, res) => {
         const teacherid = req.userId;
         const teacher = await teachers.findById(teacherid);
         const session = await sessions.findOne({
-            teacherId: teacher._id
+            teacherId: teacher._id, available:true
         });
         if (session) {
             const sessionStudentlist = session.studentsId;
@@ -186,7 +188,7 @@ const session_students = async (req, res) => {
     }
 }
 // view_teacher_info 
-const view_teacher_info = async (req, res) => {
+const view_teacher_profile = async (req, res) => {
     try {
         const teacherid = req.userId;
         const teacher = await teachers.findById(teacherid)
@@ -223,11 +225,95 @@ const view_teacher_info = async (req, res) => {
         })
     }
 }
+// approve-requests 
+const manage_requests = async (req, res) => {
+    try {
+        const teacherid = req.userId;
+        const status = req.query.status;
+        const teacher= await teachers.findById(teacherid)
+        const teacherRequests = await  requests.findOne({teacherEmail:teacher.email})
+        if(!teacher.available) 
+        {
+            return res.status(404).send( 
+                {
+             success : true ,
+            massage : " you cant manage requests befor starting a session !"})
+                }
+                if(!teacherRequests){
+                    return res.status(404).send( 
+                        {
+                     success : true ,
+                    massage : " you have no requests to manage !"})
+                        }
+                
+
+        if(status==="approved"){ // approve allowed requests
+           await  requests.updateMany(
+                { teacherEmail: { $in: teacher.email } },
+                { $set: { status: "approved" } }
+              );   
+             // await requests.Save(); 
+              return res.status(200).send( 
+                {success : true ,
+            message:"all your session requests have been approved, students can now join you !"
+                   })
+                } 
+
+        if(status==="denied"){ // delete denied requests
+            await requests.deleteMany({teacherEmail: teacher.email, status:"approved"})
+            return res.status(200).send( 
+                {success : true ,
+            message:"all your session requests have been denied and deleted !"
+                   })
+        }
+            
+    }catch (error) {
+        res.status(500).send({
+            status: 500,
+            message: "server error " + error.message
+        })
+    }
+}
+// view_requests
+const view_requests = async(req, res) => {
+    try {
+        const teacherid = req.userId;
+        const teacher= await teachers.findById(teacherid)
+        let allrequests = await requests.find({status:"pending"}); 
+        let filterdrequests = allrequests.filter(request => request.teacherEmail==teacher.email) //
+           
+        if(filterdrequests.length==0){
+            return res.status(200).send( 
+                {
+             success : true ,
+             message: "no request sent to view its response ! "
+        }) }
+        const mapedrequests = filterdrequests.map(request => ({
+            requestId: request._id,
+            studentId: request.studentId
+        }))
+            return res.status(200).send( 
+                {
+             success : true ,
+             "requests": mapedrequests
+        })  
+        
+        
+    }catch (error) {
+        res.status(500).send({
+            status: 500,
+            message: "server error " + error.message
+        })
+    }
+}
 module.exports = {
     set_student_mark,
     start_session,
     view_students,
     end_session,
     session_students,
-    view_teacher_info
+    view_teacher_profile,
+    manage_requests,
+    view_requests
+    
 }
