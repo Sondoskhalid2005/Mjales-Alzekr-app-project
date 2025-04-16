@@ -13,12 +13,12 @@ const view_mark = async (req, res) => {
                 success: true,
                 "mark": student.mark
             })
-        }
+        }else
         res.status(200).send({
             success: true,
             "mark": "no mark set yet"
         })
-    } catch (error) {
+    }catch (error) {
         res.status(500).send({
             status: 500,
             message: "server error " + error.message
@@ -31,7 +31,6 @@ const view_teacher = async (req, res) => {
         const studentid = req.userId;
         const student = await students.findById(studentid);
         const teacher = await teachers.findById(student.teacherId)
-        console.log(student, teacher, studentid);
         res.status(200).send({
             success: true,
             "teacher name": teacher.username

@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const { status } = require("express/lib/response"); /*****/ 
+const bcrypt = require("bcrypt"); 
 const teacherSchema= new  mongoose.Schema({
   username: {
     type : String ,

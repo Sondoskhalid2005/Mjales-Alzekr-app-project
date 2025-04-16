@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const teachers = require("../modules/teachers.modules")
 const students = require("../modules/students.modules")
 const mongoose = require("mongoose");
+
 const checker = async (req, res, next) => {
     try {
         const token = req.cookies.token
@@ -32,7 +33,6 @@ const checker = async (req, res, next) => {
 const teacherAuth = async (req, res, next) => {
     try {
         const id = req.userId
-        console.log(id);
         const teacher = await teachers.findById(id);
         if (!teacher) {
             return res.status(404).json({
@@ -55,17 +55,17 @@ const studentListAuth = async (req, res, next) => {
         const convertedStudentid = new mongoose.Types.ObjectId(studentid);
         const teacherid = req.userId;
         const teacher = await teachers.findById(teacherid)
-        const student = await students.findById(convertedStudentid)
-        if (!student) {
+        const user = await students.findById(convertedStudentid)
+        if (!user) {
             return res.status(404).send({
                 success: false,
-                msg: "student not found"
+                msg: "no student found with such id "
             })
         }
-        if (!teacher.students.includes(student._id)) {
+        if (!teacher.students.includes(user._id)) {
             return res.status(400).send({
                 success: false,
-                msg: "student is not in your group , mark cannot be changed ! "
+                msg: "your not allowed to chang mark for this student, student not in your group ! "
             })
         }
         next();
@@ -80,8 +80,8 @@ const studentListAuth = async (req, res, next) => {
 const studentAuth = async (req, res, next) => {
     try {
         const id = req.userId;
-        const student = await students.findById(id);
-        if (!student) {
+        const user = await students.findById(id);
+        if (!user) {
             return res.status(404).json({
                 status: 404,
                 message: "Unouthorized access !"
@@ -99,11 +99,15 @@ const studentAuth = async (req, res, next) => {
 const check_availabile = async (req, res, next) => {
     try {
         const id = req.userId;
-        const student = await students.findById(id);
-        if (student && student.available) {
+        const [teacher , student] = await Promise.all([ 
+                    teachers.findOne(id) ,
+                    students.findOne(id) 
+        ]) 
+        const user = teacher || student ;
+        if (user && user.available) {
             return res.status(404).json({
                 status: 404,
-                message: "your in a session now, you cant use any rout until you leave!"
+                message: "your in a session now, you cant use this route until you leave!"
             });
         }
         next();

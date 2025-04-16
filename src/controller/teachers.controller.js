@@ -12,9 +12,12 @@ const set_student_mark = async (req, res) => {
         const {
             mark
         } = req.body;
-        studentid = new mongoose.Types.ObjectId(studentid);
-        const teacherid = req.userId;
-        const student = await students.findById(studentid)
+        if(!mark){
+            return res.status(404).send({
+                "success": false,
+                "message": "required the new mark in request body",
+            });  
+        }else{
         await students.findByIdAndUpdate(studentid, {
             mark: mark
         });
@@ -26,6 +29,7 @@ const set_student_mark = async (req, res) => {
             "student email": updatedStudent.email,
             "student new mark": updatedStudent.mark
         });
+    }
     } catch (error) {
         res.status(500).send({
             status: 500,
@@ -38,10 +42,10 @@ const start_session = async (req, res) => {
     try {
         const teacherid = req.userId;
         const {
-            sessionname
-        } = req.body; //...will see if beter to take seperate attributes in body
+            session_name
+        } = req.body; 
         const teacher = await teachers.findById(teacherid);
-        if (!sessionname) {
+        if (!session_name) {
             return res.status(404).send({
                 success: false,
                 msg: "put session name in request body"
@@ -50,18 +54,18 @@ const start_session = async (req, res) => {
         if (teacher.available) { // means teacher in a session and can not be start new session
             return res.status(201).send({
                 "success": false,
-                "msg": "cant make a new session, you are already in a session ! "
+                "msg": "you are already in a session,you cant start a new one ! "
             });
         } else {
             await teachers.findByIdAndUpdate(teacherid, {
                 available: true
             });
             const newSession = new sessions({
-                sessionName: sessionname,
+                sessionName: session_name,
                 teacherId: teacherid,
             })
             await sessions.create({
-                sessionName: sessionname,
+                sessionName: session_name,
                 teacherId: teacherid
             });
             return res.status(201).send({
@@ -117,18 +121,16 @@ const end_session = async (req, res) => {
         if (!teacher.available && !session) {
             return res.status(404).send({
                 "success": false,
-                message: "your didnt start a session to end ! "
+                message: "you didnt start a session to end ! "
             });
         } else {
             await teachers.findByIdAndUpdate(teacherid, {
                 available: false
             });
-            console.log("here dont forget to test then delete"); 
             await students.updateMany(
                 { _id: { $in: session.studentsId.map(id => id) } }, // change all students in session availabiliy into false
                 { available: false }
               );
-            console.log("working successfully");
             await sessions.deleteMany({
                 teacherId: teacherid
             });

@@ -1,6 +1,4 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const { status } = require("express/lib/response"); /*****/ 
+const mongoose = require("mongoose"); 
 const sessionSchema= new  mongoose.Schema({
   sessionName: {
     type : String ,
