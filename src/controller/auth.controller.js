@@ -74,7 +74,7 @@ const signUp=async(req,res)=>{
          else if(role==="student"){
          
             let teacher = await teachers.find(); //return all teacher 
-            let filteredTeachers =teacher.filter(teach=>{return teach.students.length!==5})
+            let filteredTeachers =teacher.filter(teach=>{return teach.students.length!==20})
             if(filteredTeachers.length==0){
                 return res.status(404).send({ 
                 success : false , message:"registration failed, no available teachers to add you in their group !" })

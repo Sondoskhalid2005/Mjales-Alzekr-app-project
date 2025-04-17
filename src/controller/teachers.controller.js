@@ -126,6 +126,7 @@ const end_session = async (req, res) => {
                 message: "you didnt start a session to end ! "
             });
         } else {
+             
             await teachers.findByIdAndUpdate(teacherid, {
                 available: false
             });
@@ -133,10 +134,13 @@ const end_session = async (req, res) => {
                 { _id: { $in: session.studentsId.map(id => id) } }, // change all students in session availabiliy into false
                 { available: false }
               );
+              
               await sessions.findByIdAndUpdate(session._id, {
                 available: false
             });
-            return res.status(201).send({
+            session.studentsId=[]; // set student array joining session as empty
+            await session.save();
+            return res.status(200).send({
                 "success": true,
                  message: "session ended succssefully"
             });

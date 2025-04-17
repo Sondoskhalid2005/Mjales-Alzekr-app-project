@@ -9,7 +9,7 @@ router.get("/session/end-session"  ,middleware.teacherAuth,controller.end_sessio
 router.get("/view-students"  ,middleware.teacherAuth,controller.view_students)
 router.get("/session/students-session"  ,middleware.teacherAuth,controller.session_students)
 router.get("/session/manage-requests/status?"  ,middleware.teacherAuth,controller.manage_requests)
-router.get("/view-requests",middleware.check_availabile,middleware.teacherAuth, controller.view_requests)
+router.get("/view-requests",middleware.teacherAuth, controller.view_requests)
 router.get("/view-profile",middleware.check_availabile,middleware.teacherAuth, controller.view_teacher_profile)
 
 module.exports = router ;
